@@ -1,3 +1,5 @@
+# generate_key.py
+
 import os
 import secrets
 
@@ -17,16 +19,17 @@ def get_or_create_privkey(filepath="secrets/my_static_key.hex"):
         privkey_hex = secrets.token_hex(32)
         with open(filepath, "w") as f:
             f.write(privkey_hex)
-        print(f"Generated new private key and stored in {filepath}")
+        # Removed the print statement to avoid revealing the key
     else:
         with open(filepath, "r") as f:
             privkey_hex = f.read().strip()
-        print(f"Loaded existing private key from {filepath}")
+        # Removed the print statement to avoid revealing the key
 
     return privkey_hex
 
 if __name__ == "__main__":
-    # If you run this script directly, it will create or load the key
-    # and print out the hex-encoded private key.
+    # If run directly, it will just create or load the key, but won't print anything.
     private_key_hex = get_or_create_privkey()
-    print("Your static private key (hex):", private_key_hex)
+    # Omit the final print if you never want the key printed out.
+    # For debugging only, you might re-enable with caution:
+    # print("Your static private key (hex):", private_key_hex)

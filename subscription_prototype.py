@@ -41,7 +41,7 @@ def main():
 
     # 3) Create a RelayManager and connect to a single relay
     relay_manager = RelayManager()
-    relay_url = "wss://nos.lol"
+    relay_url = "wss://bucket.coracle.social"
     relay_manager.add_relay(relay_url)
     logging.info(f"Attempting to connect to relay: {relay_url}")
 
