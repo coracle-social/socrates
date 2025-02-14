@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import time
 import chromadb
@@ -27,9 +28,13 @@ def main():
     # 4. Initialize Chroma Client
     #    Use the new recommended config, specifying a persist directory
     client = chromadb.Client(Settings(
-        persist_directory=".chroma",  # or another folder of your choice
+        is_persistent=True,
+        persist_directory="/Users/venkravchenko/Dev/my-app/socrates/.chroma",
         anonymized_telemetry=False
     ))
+
+    print("Working directory:", os.getcwd())
+    print("Chroma data path:", "/Users/venkravchenko/Dev/my-app/socrates/.chroma")
 
     # 5. Get or create a collection
     #    You can name it "nostr_events" or something else
