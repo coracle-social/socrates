@@ -1,3 +1,2 @@
-venv-py39/
-secrets/
-models/
+.chroma
+.DS_Store
