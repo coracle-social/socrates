@@ -1,2 +1,14 @@
-.chroma
+# ChromaDB folder
+data/.chroma
+
+# macOS-specific
 .DS_Store
+
+# Log files
+pipeline.log
+
+# SQLite database file
+data/events.db
+
+__pycache__/
+*.py[cod]
