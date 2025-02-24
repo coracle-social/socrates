@@ -3,15 +3,7 @@ import json
 import logging
 import os
 import yaml
-
-def load_config():
-    """
-    Loads configuration from a YAML file named 'config.yaml' located in the same directory.
-    """
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(current_dir, "config.yaml")
-    with open(config_path, "r") as file:
-        return yaml.safe_load(file)
+from socrates.config import load_config
 
 def get_db_connection():
     """

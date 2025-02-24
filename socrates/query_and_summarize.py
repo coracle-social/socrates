@@ -13,15 +13,7 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from chromadb.errors import InvalidCollectionException
-
-def load_config():
-    """
-    Loads the configuration from 'config.yaml' located in the same directory.
-    """
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(current_dir, "config.yaml")
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+from socrates.config import load_config
 
 def get_top_docs(user_query, embed_model, collection, top_k=5):
     """

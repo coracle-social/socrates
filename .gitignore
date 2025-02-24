@@ -1,14 +1,14 @@
-# ChromaDB folder
-data/.chroma
+# Environment
+.env
+
+# Data folder
+socrates/data
 
 # macOS-specific
 .DS_Store
 
 # Log files
 pipeline.log
-
-# SQLite database file
-data/events.db
 
 __pycache__/
 *.py[cod]

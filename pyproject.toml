@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "socrates"
+version = "0.1.0"
+description = ""
+authors = ["Jon Staab <shtaab@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+chromadb = "^0.6.3"
+openai = "^1.63.2"
+pyyaml = "^6.0.2"
+sentence-transformers = "^3.4.1"
+websockets = "^15.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

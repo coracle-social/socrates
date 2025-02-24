@@ -5,13 +5,7 @@ import logging
 from chromadb.config import Settings
 import chromadb
 from sentence_transformers import SentenceTransformer
-
-# Load configuration from config.yaml
-def load_config():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(current_dir, "config.yaml")
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+from socrates.config import load_config
 
 # Load Chroma settings from config
 config = load_config()

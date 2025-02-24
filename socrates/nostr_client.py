@@ -12,15 +12,7 @@ import time
 import yaml
 import websockets
 from .database import insert_event  # Inserts event info into the SQL database
-
-def load_config():
-    """
-    Loads configuration from a YAML file located in the same directory.
-    """
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(current_dir, "config.yaml")
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+from socrates.config import load_config
 
 async def subscribe_to_nostr():
     """

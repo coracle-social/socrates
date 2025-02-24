@@ -2,8 +2,8 @@ import logging
 import asyncio
 
 # Import core functions from your socrates directory
-from .nostr_client import subscribe_to_nostr
-from .database import initialize_db
+from socrates.nostr_client import subscribe_to_nostr
+from socrates.database import initialize_db
 from socrates.ingest_to_chroma import check_collection_count
 
 def configure_logging():
