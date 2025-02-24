@@ -6,8 +6,7 @@ and then uses OpenAI's API to generate a personalized summary for a user query.
 Configuration (e.g., API keys, model names, persist directory) is loaded from a local YAML file.
 """
 
-from sentence_transformers import SentenceTransformer
-from socrates.embeddings import collection
+from socrates.chroma import get_top_docs
 from socrates.openai import summarize_with_openai
 
 def main():

@@ -5,7 +5,7 @@ It batches events to generate embeddings and store them in one call, then marks 
 
 import logging
 from socrates.database import get_unprocessed_events, mark_events_processed
-from socrates.embedding import store_events
+from socrates.chroma import store_events
 
 def main():
     logging.info("Starting batch ingestion from SQL to ChromaDB...")
