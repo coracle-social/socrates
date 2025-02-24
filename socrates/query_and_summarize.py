@@ -13,7 +13,7 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from chromadb.errors import InvalidCollectionException
-from socrates.config import load_config
+from socrates.config import config
 
 def get_top_docs(user_query, embed_model, collection, top_k=5):
     """
@@ -112,8 +112,6 @@ def main():
       - Retrieves matching documents and summarizes them using OpenAI.
       - Outputs the summary and retrieved documents.
     """
-    config = load_config()
-
     # Retrieve OpenAI API key.
     openai_api_key = os.environ.get("OPENAI_API_KEY", config.get("summarizer", {}).get("openai_api_key"))
     if not openai_api_key:

@@ -3,13 +3,12 @@ import json
 import logging
 import os
 import yaml
-from socrates.config import load_config
+from socrates.config import config
 
 def get_db_connection():
     """
     Returns a SQLite database connection. Ensures the directory for the database exists.
     """
-    config = load_config()
     db_settings = config.get("database", {})
     current_dir = os.path.dirname(os.path.abspath(__file__))
     db_relative_path = db_settings.get("path", "data/events.db")

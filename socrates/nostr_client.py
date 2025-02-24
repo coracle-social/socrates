@@ -12,14 +12,13 @@ import time
 import yaml
 import websockets
 from .database import insert_event  # Inserts event info into the SQL database
-from socrates.config import load_config
+from socrates.config import config
 
 async def subscribe_to_nostr():
     """
     Subscribes to a Nostr relay using parameters from the config, receives events,
     and inserts events into the SQL database.
     """
-    config = load_config()
     nostr_config = config.get("nostr", {})
     relay_url = nostr_config.get("relay_url", "wss://groups.0xchat.com")
     kinds = nostr_config.get("kinds", [9])

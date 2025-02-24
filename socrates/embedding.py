@@ -5,10 +5,9 @@ import logging
 from chromadb.config import Settings
 import chromadb
 from sentence_transformers import SentenceTransformer
-from socrates.config import load_config
+from socrates.config import config
 
 # Load Chroma settings from config
-config = load_config()
 chroma_config = config.get("chroma", {})
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # Build the persist directory path relative to the socrates folder.
