@@ -9,7 +9,7 @@ import json
 import logging
 import time
 import websockets
-from .database import insert_event  # Inserts event info into the SQL database
+from socrates.database import insert_event
 from socrates.config import config
 
 async def subscribe_to_nostr():
@@ -18,48 +18,45 @@ async def subscribe_to_nostr():
     and inserts events into the SQL database.
     """
     nostr_config = config.get("nostr", {})
-    relay_url = nostr_config.get("relay_url", "wss://groups.0xchat.com")
-    kinds = nostr_config.get("kinds", [9])
-    subscription_id = nostr_config.get("subscription_id", "dvm_sub")
-    run_seconds = nostr_config.get("run_seconds", 30)
+    relay = nostr_config.get("relay")
+    filter = nostr_config.get("filter")
 
-    # Build the filter object, using "#h" as the tag filter if available.
-    filter_obj = {"kinds": kinds}
-    additional_filters = nostr_config.get("additional_filters", {})
-    tags = additional_filters.get("tags", {})
-    tag_value = tags.get("h")
-    if tag_value:
-        filter_obj["#h"] = [tag_value]
+    if not relay:
+        raise Exception('config: nostr.relay is required')
+
+    if not filter:
+        raise Exception('config: nostr.filter is required')
 
     # Construct the subscription (REQ) message for Nostr.
-    req_message = ["REQ", subscription_id, filter_obj]
-    start_time = time.time()
+    req_message = ["REQ", 'socrates', filter]
 
-    async with websockets.connect(relay_url) as websocket:
+    async with websockets.connect(relay) as websocket:
         # Send our subscription request to the relay.
         await websocket.send(json.dumps(req_message))
         logging.info(f"Subscription request sent: {req_message}")
 
         # Continue receiving messages until the time limit is reached.
-        while time.time() - start_time < run_seconds:
+        while True:
             try:
-                # Wait up to 1 second for a message.
-                message = await asyncio.wait_for(websocket.recv(), timeout=1)
+                message = await asyncio.wait_for(websocket.recv(), timeout=5)
                 logging.info(f"Received: {message}")
                 data = json.loads(message)
 
-                # Process the message if it is an event (has EVENT marker in the first element).
-                if isinstance(data, list) and len(data) >= 3 and data[0] == "EVENT":
-                    event = data[2]  # The event details as a dictionary.
-                else:
+                if not isinstance(data, list):
                     logging.debug("Skipping non-event message.")
                     continue
 
-                # Insert the event in the SQL database.
-                insert_event(event)
-                logging.info(f"Inserted event {event.get('id')} into SQL database.")
+                # Process the message if it is an event (has EVENT marker in the first element).
+                if len(data) >= 3 and data[0] == "EVENT":
+                    insert_event(data[2])
+                    logging.info(f"Inserted event {event.get('id')} into SQL database.")
+
+                # Stop listening on EOSE
+                if len(data) >= 1 and data[0] == "EOSE":
+                    logging.info(f"Received eose from {relay}")
+                    break
             except asyncio.TimeoutError:
-                continue
+                break
 
 def main():
     """
