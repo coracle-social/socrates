@@ -4,7 +4,7 @@ import asyncio
 # Import core functions from your socrates directory
 from socrates.nostr_client import subscribe_to_nostr
 from socrates.database import get_unprocessed_events, mark_events_processed
-from socrates.chroma import store_events, get_top_docs, check_collection_count
+from socrates.chroma import store_events, get_top_docs, collection
 from socrates.openai import summarize_with_openai
 
 def configure_logging():
@@ -36,10 +36,19 @@ def run_chroma_ingestion():
     logging.info("Starting ingestion of new events into Chroma...")
 
     # Retrieve unprocessed events from the SQL database.
-    events = store_events(get_unprocessed_events())
-    mark_events_processed([event["id"] for event in events])
+    events = get_unprocessed_events()
+
+    # If we have events, store them in chrome and update in sql
+    if events:
+        store_events(events)
+        mark_events_processed([event["id"] for event in events])
 
     logging.info(f"Successfully processed and ingested {len(events)} events.")
+
+def check_collection_count():
+    result = collection.get()
+    count = len(result["ids"][0]) if result.get("ids") else 0
+    print(f"Number of documents in ChromaDB: {count}")
 
 def run_query_and_summarize():
     """

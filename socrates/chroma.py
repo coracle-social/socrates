@@ -39,12 +39,6 @@ def store_events(events):
 
     logging.info("Batch stored in ChromaDB successfully.")
 
-def count_events():
-    result = collection.get()
-    count = len(result["ids"][0]) if result.get("ids") else 0
-    print(f"Number of documents in ChromaDB: {count}")
-
-
 def get_top_docs(user_query, limit=5):
     """
     Encodes the user's query using the provided embedding model,
