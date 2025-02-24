@@ -7,68 +7,46 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 from socrates.config import config
 
-# Load Chroma settings from config
 chroma_config = config.get("chroma", {})
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Build the persist directory path relative to the socrates folder.
-CHROMA_PERSIST_DIR = os.path.join(current_dir, chroma_config.get("persist_directory", "data/.chroma"))
-COLLECTION_NAME = chroma_config.get("collection_name", "nostr_events")
+
 EMBED_MODEL_NAME = chroma_config.get("embed_model_name", "all-MiniLM-L6-v2")
 
 # Initialize the SentenceTransformer model
 embed_model = SentenceTransformer(EMBED_MODEL_NAME)
 
 # Initialize Chroma client and collection
-chroma_client = chromadb.Client(Settings(
+client = chromadb.Client(Settings(
     is_persistent=True,
-    persist_directory=CHROMA_PERSIST_DIR,
+    persist_directory="data/.chroma",
     anonymized_telemetry=False
 ))
-collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
 
-def generate_embedding(event_data):
-    """
-    Generates an embedding vector for the event's content.
-    If content is empty, it embeds a single space.
-    """
-    text = event_data.get("content", "").strip()
-    if not text:
-        text = " "  # Ensure there's content to embed.
-    try:
-        embedding = embed_model.encode(text)
-        return embedding
-    except Exception as e:
-        logging.error(f"Error generating embedding for event {event_data.get('id')}: {e}")
-        return None
+# Initialize our collection
+collection = client.get_or_create_collection('nostr_events')
 
-def store_embedding(event_data, embedding):
-    try:
-        # Convert numpy array to a list of native Python floats.
-        embedding_list = list(map(float, embedding.tolist()))
-        
-        collection.add(
-            ids=[event_data["id"]],
-            embeddings=[embedding_list],  # Now a list of floats, as expected
-            documents=[event_data.get("content", "")],
-            metadatas=[{
-                "kind": event_data.get("kind"),
-                "pubkey": event_data.get("pubkey"),
-                "created_at": event_data.get("created_at")
-            }]
-        )
-        logging.info(f"Stored embedding for event {event_data['id']} in ChromaDB.")
-    except Exception as e:
-        logging.error(f"Error storing embedding for event {event_data.get('id')}: {e}")
-
-def generate_embeddings(texts):
+def store_events(events):
     """
-    Generates embeddings in batch for a list of texts.
+    Stores a batch of events and their embeddings into ChromaDB.
     Args:
-      texts (List[str]): List of texts to embed.
-    
-    Returns:
-      List[List[float]]: List of embeddings, where each embedding is a list of floats.
+      events (List[dict]): List of event dictionaries.
+      embeddings (List[List[float]]): Corresponding list of embeddings.
     """
-    embeddings = embed_model.encode(texts, batch_size=32)
-    # Ensure they are converted into plain Python lists of floats.
-    return [list(map(float, emb.tolist())) for emb in embeddings]
+    ids = [event["id"] for event in events]
+    docs = [event["content"] for event in events]
+    embeddings = [list(map(float, emb.tolist())) for emb in embed_model.encode(docs, batch_size=32)]
+    metadatas = [{"kind": event["kind"], "pubkey": event["pubkey"], "created_at": event["created_at"]} for event in events]
+
+    # Use upsert to add or update duplicates.
+    collection.upsert(
+        ids=ids,
+        documents=docs,
+        embeddings=embeddings,
+        metadatas=metadatas
+    )
+
+    logging.info("Batch stored in ChromaDB successfully.")
+
+def count_events():
+    result = collection.get()
+    count = len(result["ids"][0]) if result.get("ids") else 0
+    print(f"Number of documents in ChromaDB: {count}")

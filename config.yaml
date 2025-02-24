@@ -1,6 +1,4 @@
 chroma:
-  persist_directory: "data/.chroma"
-  collection_name: "nostr_events"
   embed_model_name: "all-MiniLM-L6-v2"
   batch_size: 64
 
