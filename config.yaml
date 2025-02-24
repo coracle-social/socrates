@@ -1,17 +1,11 @@
 chroma:
-  embed_model_name: "all-MiniLM-L6-v2"
-  batch_size: 64
+  model: "all-MiniLM-L6-v2"
+
+summarizer:
+  model: "gpt-4o-mini"
 
 nostr:
-  enabled: true
-  relay_url: "wss://groups.0xchat.com"
-  subscription_id: "dvm_sub"
-  run_seconds: 15
+  relay: "wss://groups.0xchat.com"
   filter:
     "kinds": [9]
     "#h": "825f1ed57f20d06d43e93f3cb8207d61ce8cdfff9d9f6722540329c00fba1b44"
-
-summarizer:
-  type: "openai"
-  openai_api_key: "YOUR_OPENAI_API_KEY"
-  model: "gpt-4o-mini"

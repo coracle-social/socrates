@@ -7,30 +7,18 @@ Configuration comes from a local 'config.yaml' file.
 import asyncio
 import json
 import logging
-import time
 import websockets
 from socrates.database import insert_event
-from socrates.config import config
+from socrates.config import NOSTR_RELAY, NOSTR_FILTER
 
 async def subscribe_to_nostr():
     """
     Subscribes to a Nostr relay using parameters from the config, receives events,
     and inserts events into the SQL database.
     """
-    nostr_config = config.get("nostr", {})
-    relay = nostr_config.get("relay")
-    filter = nostr_config.get("filter")
+    req_message = ["REQ", 'socrates', NOSTR_FILTER]
 
-    if not relay:
-        raise Exception('config: nostr.relay is required')
-
-    if not filter:
-        raise Exception('config: nostr.filter is required')
-
-    # Construct the subscription (REQ) message for Nostr.
-    req_message = ["REQ", 'socrates', filter]
-
-    async with websockets.connect(relay) as websocket:
+    async with websockets.connect(NOSTR_RELAY) as websocket:
         # Send our subscription request to the relay.
         await websocket.send(json.dumps(req_message))
         logging.info(f"Subscription request sent: {req_message}")
@@ -48,12 +36,13 @@ async def subscribe_to_nostr():
 
                 # Process the message if it is an event (has EVENT marker in the first element).
                 if len(data) >= 3 and data[0] == "EVENT":
-                    insert_event(data[2])
-                    logging.info(f"Inserted event {event.get('id')} into SQL database.")
+                    event = data[2]
+                    insert_event(event)
+                    logging.info(f"Inserted event {event['id']} into SQL database.")
 
                 # Stop listening on EOSE
                 if len(data) >= 1 and data[0] == "EOSE":
-                    logging.info(f"Received eose from {relay}")
+                    logging.info(f"Received eose from {NOSTR_RELAY}")
                     break
             except asyncio.TimeoutError:
                 break

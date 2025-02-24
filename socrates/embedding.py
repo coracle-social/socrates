@@ -2,14 +2,10 @@ import logging
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
-from socrates.config import config
-
-chroma_config = config.get("chroma", {})
-
-EMBED_MODEL_NAME = chroma_config.get("embed_model_name", "all-MiniLM-L6-v2")
+from socrates.config import CHROMA_MODEL
 
 # Initialize the SentenceTransformer model
-embed_model = SentenceTransformer(EMBED_MODEL_NAME)
+embed_model = SentenceTransformer(CHROMA_MODEL)
 
 # Initialize Chroma client and collection
 client = chromadb.Client(Settings(
@@ -47,3 +43,33 @@ def count_events():
     result = collection.get()
     count = len(result["ids"][0]) if result.get("ids") else 0
     print(f"Number of documents in ChromaDB: {count}")
+
+
+def get_top_docs(user_query, limit=5):
+    """
+    Encodes the user's query using the provided embedding model,
+    queries the ChromaDB collection for the top matching documents,
+    and returns these documents along with their metadata.
+
+    Args:
+      user_query (str): The user's search query.
+      limit (int): Number of top documents to retrieve.
+
+    Returns:
+      List[dict]: A list of dictionaries representing the retrieved documents.
+    """
+    query_embedding = embed_model.encode(user_query).tolist()
+
+    results = collection.query(query_embeddings=[query_embedding], n_results=limit)
+
+    docs = []
+    for i, doc_id in enumerate(results["ids"][0]):
+        doc_text = results["documents"][0][i]
+        meta = results["metadatas"][0][i]
+        docs.append({
+            "id": doc_id,
+            "text": doc_text,
+            "metadata": meta
+        })
+
+    return docs
