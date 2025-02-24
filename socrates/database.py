@@ -38,24 +38,21 @@ def insert_event(event):
     Inserts a Nostr event into the database using an upsert/ignore strategy.
 
     Expects event to be a dictionary with at least the following keys:
-      - id, pubkey, created_at, kind, content,
-      - tags (optional).
+      - id, pubkey, created_at, kind, content, tags
     """
     cursor = conn.cursor()
-    tags = event.get("tags")
-    tags_str = json.dumps(tags) if tags is not None else None
 
     try:
         cursor.execute("""
             INSERT OR IGNORE INTO nostr_events (id, pubkey, created_at, kind, content, tags, processed)
             VALUES (?, ?, ?, ?, ?, ?, 0)
         """, (
-            event.get("id"),
-            event.get("pubkey"),
-            event.get("created_at"),
-            event.get("kind"),
-            event.get("content"),
-            tags_str
+            event["id"],
+            event["pubkey"],
+            event["created_at"],
+            event["kind"],
+            event["content"],
+            json.dumps(event["tags"])
         ))
         conn.commit()
         if cursor.rowcount == 0:
@@ -72,15 +69,11 @@ def get_unprocessed_events():
     """
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM nostr_events WHERE processed = 0 ORDER BY created_at")
-    rows = cursor.fetchall()
+    events = cursor.fetchall()
     events = []
     for row in rows:
         event = dict(row)
-        if event.get("tags"):
-            try:
-                event["tags"] = json.loads(event["tags"])
-            except Exception:
-                event["tags"] = None
+        event["tags"] = json.loads(event["tags"])
         events.append(event)
     return events
 
