@@ -1,9 +1,6 @@
-# dvm/embed.py
-import os
-import yaml
 import logging
-from chromadb.config import Settings
 import chromadb
+from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from socrates.config import config
 

@@ -4,12 +4,10 @@ and inserts the event data into the SQL database using the insert_event() functi
 Configuration comes from a local 'config.yaml' file.
 """
 
-import os
 import asyncio
 import json
 import logging
 import time
-import yaml
 import websockets
 from .database import insert_event  # Inserts event info into the SQL database
 from socrates.config import config

@@ -3,10 +3,9 @@ This module ingests new events from the SQL database into the ChromaDB vector st
 It batches events to generate embeddings and store them in one call, then marks the events as processed.
 """
 
-import logging, os, chromadb
-from chromadb.config import Settings
+import logging
 from socrates.database import get_unprocessed_events, mark_events_processed
-from socrates.embedding import collection, store_events
+from socrates.embedding import store_events
 
 def main():
     logging.info("Starting batch ingestion from SQL to ChromaDB...")

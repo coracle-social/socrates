@@ -2,7 +2,6 @@ import sqlite3
 import json
 import logging
 import os
-import yaml
 
 def initialize_db():
     """
@@ -69,9 +68,8 @@ def get_unprocessed_events():
     """
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM nostr_events WHERE processed = 0 ORDER BY created_at")
-    events = cursor.fetchall()
     events = []
-    for row in rows:
+    for row in cursor.fetchall():
         event = dict(row)
         event["tags"] = json.loads(event["tags"])
         events.append(event)

@@ -7,7 +7,6 @@ Configuration (e.g., API keys, model names, persist directory) is loaded from a 
 """
 
 import os
-import yaml
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
