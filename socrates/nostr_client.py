@@ -46,13 +46,3 @@ async def subscribe_to_nostr():
                     break
             except asyncio.TimeoutError:
                 break
-
-def main():
-    """
-    Sets up logging and runs the Nostr subscription using asyncio.
-    """
-    logging.basicConfig(level=logging.INFO)
-    asyncio.run(subscribe_to_nostr())
-
-if __name__ == "__main__":
-    main()

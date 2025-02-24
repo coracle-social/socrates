@@ -3,8 +3,9 @@ import asyncio
 
 # Import core functions from your socrates directory
 from socrates.nostr_client import subscribe_to_nostr
-from socrates.database import initialize_db
-from socrates.ingest_to_chroma import check_collection_count
+from socrates.database import get_unprocessed_events, mark_events_processed
+from socrates.chroma import store_events, get_top_docs, check_collection_count
+from socrates.openai import summarize_with_openai
 
 def configure_logging():
     """
@@ -32,25 +33,45 @@ def run_chroma_ingestion():
     """
     Ingests new events stored in the SQL database into the ChromaDB vector store.
     """
-    from socrates.ingest_to_chroma import main as ingest_main
     logging.info("Starting ingestion of new events into Chroma...")
-    ingest_main()
-    logging.info("Chroma ingestion complete.")
+
+    # Retrieve unprocessed events from the SQL database.
+    events = store_events(get_unprocessed_events())
+    mark_events_processed([event["id"] for event in events])
+
+    logging.info(f"Successfully processed and ingested {len(events)} events.")
 
 def run_query_and_summarize():
     """
     Retrieves a user query, fetches relevant documents from ChromaDB,
     and generates a summary using the configured OpenAI model.
     """
-    from socrates.query_and_summarize import main as query_main
     logging.info("Now testing query and summarization...")
-    query_main()
-    logging.info("Query and summarization test complete.")
+
+    # Prompt user for a query.
+    user_query = input("Enter your query: ")
+
+    # Retrieve top matching documents.
+    top_docs = get_top_docs(user_query, limit=5)
+    if not top_docs:
+        print("No documents found. Ensure your collection has been populated with events!")
+        return
+
+    # Generate summary using OpenAI.
+    summary = summarize_with_openai(user_query, top_docs)
+
+    # Output summary and document details.
+    print("=== SUMMARY ===")
+    print(summary)
+    print("\n=== RETRIEVED DOCUMENTS ===")
+    for i, doc in enumerate(top_docs, start=1):
+        print(f"Doc {i} (kind={doc['metadata'].get('kind', 'N/A')}):")
+        print(doc['text'])
+        print("---")
 
 def main():
     # Configure logger and ensure the SQL database is set up.
     configure_logging()
-    initialize_db()
 
     # Stage 1: Collect events from Nostr.
     run_nostr_collection()
