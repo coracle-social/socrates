@@ -2,7 +2,7 @@
 .env
 
 # Data folder
-socrates/data
+data
 
 # macOS-specific
 .DS_Store
