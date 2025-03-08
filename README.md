@@ -1,6 +1,6 @@
 # DVM Modular Pipeline Demo
 
-This project demonstrates a modular pipeline designed as part of a Data Virtualization Module (DVM) proof-of-concept. The demo collects events from a Nostr relay, stores them in an SQLite database, generates vector embeddings using a pre-trained SentenceTransformer model, and indexes these embeddings into a ChromaDB vector store for querying and summarization.
+This project demonstrates a modular pipeline designed as part of a Data Vending Machine (DVM) proof-of-concept. The demo collects events from a Nostr relay, stores them in an SQLite database, generates vector embeddings using a pre-trained SentenceTransformer model, and indexes these embeddings into a ChromaDB vector store for querying and summarization.
 
 ## Project Structure
 
