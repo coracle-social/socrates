@@ -5,7 +5,7 @@ import asyncio
 from socrates.nostr_client import subscribe_to_nostr
 from socrates.database import get_unprocessed_events, mark_events_processed
 from socrates.chroma import store_events, get_top_docs, collection
-from socrates.openai import summarize_with_openai
+from socrates.openai_summary import summarize_with_openai
 
 def configure_logging():
     """

@@ -1,5 +1,6 @@
 chromadb==0.4.15
-openai==1.63.2
+nostr==0.0.2
+openai==1.68.2
 PyYAML==6.0.2
 sentence_transformers==3.4.1
 websockets==14.2

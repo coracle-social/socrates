@@ -1,129 +1,143 @@
 # DVM Modular Pipeline Demo
 
-This project demonstrates a modular pipeline designed as part of a Data Virtualization Module (DVM) proof-of-concept. The demo collects events from a Nostr relay, stores them in an SQLite database, generates vector embeddings using a pre-trained SentenceTransformer model, and indexes these embeddings into a ChromaDB vector store for querying and summarization.
+This project demonstrates a modular Data Vending Machine (DVM) pipeline. It collects events from Nostr relays into an SQLite database, processes those events by generating vector embeddings using a pre-trained SentenceTransformer model, and indexes them into a persistent ChromaDB vector store for querying and summarization. 
+
+---
 
 ## Project Structure
 
-The project is contained entirely within the `socrates/` directory and is organized as follows:
-
 - **database.py**  
-  Manages SQLite interactions (database initialization and event insertion/updating).
+  Manages SQLite interactions including database initialization and event insertion/updating.
 
 - **nostr_client.py**  
-  Connects to a Nostr relay, collects event data, and stores the events in the SQLite database.
+  Connects to a Nostr relay, collects event data, and stores these events in the SQLite database.
 
-- **embedding.py**  
-  Loads configuration from `config.yaml`, initializes the SentenceTransformer model, and generates embeddings. It also provides functionality to store individual embeddings into ChromaDB.
+- **chroma.py**  
+  Loads configuration from `config.yaml`, initializes the SentenceTransformer model, and manages the ChromaDB vector store.  
+  It provides functions for batch embedding and upserting events (`store_events`) as well as retrieving documents based on a query (`get_top_docs`).
 
-- **ingest_to_chroma.py**  
-  Retrieves unprocessed events from the database, uses batch processing to generate embeddings, and upserts them into a ChromaDB collection.  
-  It also includes a helper function to check the document count in the vector store.
-
-- **query_and_summarize.py**  
-  Prompts the user for a query, retrieves relevant documents from ChromaDB, and uses the OpenAI API to generate a summary.
+- **openai_summary.py**  
+  Uses OpenAI’s API to generate summaries by combining a user query with the text and metadata of retrieved events.
 
 - **run_pipeline.py**  
-  The main entry point that orchestrates the entire pipeline:
-  1. Configures logging to output to the console.
-  2. Initializes the database.
-  3. Collects events from Nostr.
-  4. Runs the ingestion phase (bulk embedding and upsertion into ChromaDB).
-  5. Checks the ChromaDB collection count.
-  6. Executes the query and summarization module.
+  Orchestrates the overall pipeline by:
+  - Collecting unprocessed events from the database.
+  - Ingesting (batch embedding) events into ChromaDB.
+  - Optionally verifying the document count in the vector store.
+  - Executing a query and generating a summary for testing purposes.
 
-- **config.yaml**  
-  Defines configuration options such as the persist directory for ChromaDB (`data/.chroma`), batch size, and embed model name (e.g., `"all-MiniLM-L6-v2"`).
-
-- **data/**  
-  - Contains the `.chroma` folder for ChromaDB persistence.
-  - Contains the SQLite database file (`events.db`).
-
-- **requirements.txt**  
-  Lists only the top‑level packages required by the demo:
+- **dvm_service.py**  
+  An asynchronous live service module that:
+  - Connects to a relay (e.g., `wss://nos.lol`).
+  - Subscribes to job request events (of kind 5300) intended for the DVM public key.
+  - Extracts the query from the event’s `input` tag.
+  - Retrieves matching documents from the ChromaDB collection.
+  - Generates a summary via the OpenAI summarization module.
+  - Builds and signs a response event (kind 6300) that is then published back to the relay.
   
-  ```plaintext
-  chromadb==0.4.15
-  openai==1.63.2
-  PyYAML==6.0.2
-  sentence_transformers==3.4.1
-  websockets==14.2
-  ```
+---
 
 ## Setup Instructions
 
-1. Clone the Repository
+1. **Clone the Repository**
 
-Clone the repository to your local machine and navigate to the project directory:
+   Clone the repository and navigate into the project directory:
+   ```sh
+   git clone <repository-url>
+   cd socrates
+   ```
 
-```sh
-git clone <repository-url>
-cd socrates
-```
+2. **Create and Activate a Virtual Environment**
 
-2. Create and Activate a Virtual Environment
+   It is recommended to use a virtual environment:
+   ```sh
+   python -m venv venv
+   source venv/bin/activate  # On macOS and Linux
+   # venv\Scripts\activate    # On Windows
+   ```
 
-It is recommended to use a virtual environment:
+3. **Install Dependencies**
 
-```sh
-python -m venv venv
-source venv/bin/activate  # On macOS and Linux
-# venv\Scripts\activate   # On Windows
-```
+   Install the required packages:
+   ```sh
+   pip install -r requirements.txt
+   ```
 
-3. Install Dependencies
+4. **Configure the OpenAI API Key**
 
-Ensure your active virtual environment has the necessary packages by running:
+   Set your OpenAI API key as an environment variable:
+   ```sh
+   export OPENAI_API_KEY=<your-openai-api-key>
+   ```
+   On Windows (Command Prompt):
+   ```sh
+   set OPENAI_API_KEY=<your-openai-api-key>
+   ```
 
-```sh
-pip install -r requirements.txt
-```
+5. **Configuration Files**
 
-4. Configure Your OpenAI API Key
+   All configuration settings (such as the persist directory for ChromaDB, batch size, and the embed model name) can be modified in `config.yaml`.
 
-The summarization module uses OpenAI's API. To use it, you must provide your OpenAI API key. Set the OPENAI_API_KEY environment variable in your shell. For example:
+---
 
-```sh
-export OPENAI_API_KEY=<your-openai-api-key>
-```
+## Using the DVM Service Module for Demo Purposes
 
-On Windows (Command Prompt):
+The `dvm_service.py` module is designed to run continuously and act as a live service that responds to job requests. Follow the steps below to demo its functionality:
 
-```sh
-set OPENAI_API_KEY=<your-openai-api-key>
-```
+1. **Start the DVM Service**
 
-5. Running the Demo
+   Run the DVM service by executing:
+   ```sh
+   python -m socrates.dvm_service
+   ```
+   The service will:
+   - Connect to the relay at `wss://nos.lol`.
+   - Subscribe to job requests targeted to the DVM’s public key.
+   - Log every message it receives for debugging purposes.
 
-Run the pipeline using Python’s module syntax to maintain correct package imports:
+2. **Submit a Job Request**
 
-```sh
-python -m socrates.run_pipeline
-```
+   For testing, you can use your client or the command-line tool `nak` to send a job request. Please note that you'll need to install `nak` if you want to use it for testing. For example, on macOS you can install it via Homebrew:
+   ```sh
+   brew install nak
+   ```
+   Then, send a job request with the query included in an `input` tag:
+   ```sh
+   nak event -k 5300 \
+     -t p=298f2741b893fe98e4464b142879cdd762c4f26a9e6c8f044b2064c36f153d30 \
+     -t expiration=$(( $(date +%s) + 120 )) \
+     -t input="<add your query here>" \
+     wss://nos.lol
+   ```
+   This command generates an event with the necessary tags. The `dvm_service.py` module will extract the query from the `input` tag, query the ChromaDB collection for related events, generate a summary using OpenAI’s API, and finally publish a signed response event back to the relay.
 
-The pipeline will:
-- Initialize logging (console output only, no log file).
-- Set up the SQLite database and collect events.
-- Batch embed events using SentenceTransformer and insert them into ChromaDB.
-- Optionally check the document count in ChromaDB.
-- Execute query and summarization (using the OpenAI API).
+3. **Verify the Output**
 
-## Modular Design & Extensibility
+   The service logs the extracted query, details about the documents retrieved, and the published response event. To verify from the client side, you can use the following command to search for the response event (kind 6300) using its etag (which should contain the original event's ID):
+   ```sh
+   nak req -k 6300 -t e=<original_event_id> --stream wss://nos.lol
+   ```
+   Replace `<original_event_id>` with the ID of the job request event that was originally sent. This command streams matching events from the relay and helps verify that:
+   - The query is correctly parsed from the event’s tags.
+   - The summarization correctly combines the query with matching documents.
+   - A signed response event (kind 6300) is sent back to the relay.
 
-Each component of this pipeline is engineered to work independently:
-- Collection Module: Handles event collection and database storage.
-- Ingestion Module: Manages batch processing to generate embeddings and upsert them into a vector store.
-- Query/Summarization Module: Provides an interface to query the vector store and summarize results.
-
-This design makes it simple to integrate parts of the pipeline into a larger DVM system. For instance, if you only need event ingestion or summarization functionality, you can import and use the respective modules without executing the entire pipeline.
-
-## Model Downloads
-
-The SentenceTransformer model ("all-MiniLM-L6-v2") is specified in config.yaml. The first time the demo is run, the model will be automatically downloaded from the Hugging Face Model Hub if it is not already cached locally.
+---
 
 ## Additional Notes
 
-### Configuration
-All settings (e.g., persist directory, batch size, and model name) can be modified in config.yaml.
+- **Modular Design & Extensibility**  
+  Each module is designed to work independently. You can use the ingestion or summarization functions alone if needed.
 
-### Requirements Verification
-You can use tools like pip freeze or pipreqs to verify and update the list of top-level dependencies if your project’s imports change.
+- **Model Downloads**  
+  The first time the demo runs, the SentenceTransformer model (e.g., `"all-MiniLM-L6-v2"`) will be automatically downloaded from the Hugging Face Model Hub if not already cached locally.
+
+- **Dependencies**  
+  Review `requirements.txt` for the list of top‑level dependencies. Use tools such as `pip freeze` to verify your environment if any issues occur.
+
+- **Ignoring Archive Files**  
+  This repository includes only the contents of the `socrates/` directory. Any scripts or files in the archive folders are for reference only and will not be committed to GitHub.
+
+---
+
+Happy coding and demoing your DVM service!

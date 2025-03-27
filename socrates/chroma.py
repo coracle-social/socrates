@@ -41,21 +41,14 @@ def store_events(events):
 
 def get_top_docs(user_query, limit=5):
     """
-    Encodes the user's query using the provided embedding model,
+    Encodes the user's query using the embedding model,
     queries the ChromaDB collection for the top matching documents,
     and returns these documents along with their metadata.
-
-    Args:
-      user_query (str): The user's search query.
-      limit (int): Number of top documents to retrieve.
-
-    Returns:
-      List[dict]: A list of dictionaries representing the retrieved documents.
     """
     query_embedding = embed_model.encode(user_query).tolist()
-
+    
     results = collection.query(query_embeddings=[query_embedding], n_results=limit)
-
+    
     docs = []
     for i, doc_id in enumerate(results["ids"][0]):
         doc_text = results["documents"][0][i]
